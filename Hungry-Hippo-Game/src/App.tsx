@@ -1,10 +1,15 @@
-import { useRef } from 'react';
+import React, { useRef } from 'react';
 import { IRefPhaserGame, PhaserGame } from './PhaserGame';
 import AacInterface from './aac/AacInterface';
 
+interface Fruit {
+    id: string;
+    name: string;
+    imagePath: string;
+}
+
 function App()
 {
-
     //  References to the PhaserGame component (game and scene are exposed)
     const phaserRef = useRef<IRefPhaserGame | null>(null);
 
@@ -27,9 +32,21 @@ function App()
         }
     }
 
+    
+    const [fruitStack, setFruitStack] = React.useState<Fruit[]>([]);
+    const handleSelectedFruit = (selectedFruit: Fruit) => {
+        // Update the fruit stack with the selected fruit
+        setFruitStack(previousStack => {
+            console.log("Selected Fruit:", selectedFruit);
+            const newStack = [selectedFruit, ...previousStack];
+            console.log('Selected Fruit:', newStack);
+            return newStack;
+       });
+    };
+
     return (
         <div id="app">
-            <AacInterface />
+            <AacInterface onFruitSelected={handleSelectedFruit}/>
             <PhaserGame ref={phaserRef} />
             <div>
                 <div>

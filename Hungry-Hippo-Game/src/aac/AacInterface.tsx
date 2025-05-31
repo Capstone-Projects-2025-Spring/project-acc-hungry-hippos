@@ -7,24 +7,26 @@ const AAC_ITEMS = [
   {id: "grapes", name: "Grapes", imagePath: "/assets/grape.png"},
 ];
 
-type Fruit = {
+interface Fruit {
     id: string;
     name: string;
     imagePath: string;
 };
 
+// Callback function to handle fruit selection
+interface AacInterfaceProps {
+  onFruitSelected: (fruit: Fruit) => void;
+}
 
-function AacInterface() {
-  /*
-  selectedFruit is used to track the currently selected fruit in the AAC.
-  setSelectedFruit is a function that updates the selectedFruit state.
-  */
+const AacInterface: React.FC<AacInterfaceProps> = ({ onFruitSelected }) => {
+  // State to keep track of the selected fruit
   const [selectedFruit, setSelectedFruit] = React.useState<Fruit | null>(null);
 
   const handleFruitClick = (fruit: Fruit) => {
     // Update the selected fruit when an AAC item is clicked
-    // ============ TODO: Add logic to handle item selection (Audio, Firebase, Game) ============ //
+    // Send the selected fruit to the parent component via the onFruitSelected callback
     setSelectedFruit(fruit);
+    onFruitSelected(fruit);
   };
 
   return (
