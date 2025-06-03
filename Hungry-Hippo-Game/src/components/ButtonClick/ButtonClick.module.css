@@ -1,0 +1,17 @@
+/* src/components/ButtonClick/ButtonClick.module.css */
+
+.button {
+  padding: 1rem 2rem;
+  width: 15rem;
+  font-size: 1.25rem;
+  background-color: #ff69b4;
+  color: white;
+  border:none;
+  border-radius: 50px;
+  cursor: pointer;
+  transition: background-color 0.2s ease-in-out;
+}
+
+.button:hover {
+  background-color: #e0559f;
+}
