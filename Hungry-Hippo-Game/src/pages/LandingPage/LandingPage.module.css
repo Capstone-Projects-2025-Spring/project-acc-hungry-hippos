@@ -4,8 +4,51 @@
   align-items: center;
   justify-content: center; /* centers vertically */
   height: 100vh; /* full screen height */
+  background-image: url('/assets/mainBackground.png');
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover; 
 }
 
-.title {
-  margin-bottom: 5rem;
+.logo {
+  width: 350px;
+  height: auto;
+  
+}
+.enterText{
+  color: black;
+}
+
+.createGameText{
+  color: black;
+  transition: color 0.2s ease-in-out;
+}
+
+.createGameText:hover {
+  color: gray;
+}
+
+/* 5 code input */
+.codeInputGroup {
+  display: flex;
+  gap: 12px; 
+}
+
+.codeInputBox {
+  background-color: white;
+  width: 50px;
+  height: 60px;
+  text-align: center;
+  font-size: 2rem;
+  border: 1.5px solid black;
+  border-radius: 8px;
+  color: black;
+  outline: none;
+  caret-color: black;
+}
+
+/* handle incorrect code */
+.errorInputBox {
+  border-color: red !important;
+  box-shadow: 0 0 5px red;
 }
