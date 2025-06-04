@@ -15,6 +15,12 @@ const AacInterface: React.FC<AacInterfaceProps> = ({ onFruitSelected }) => {
     // Send the selected fruit to the parent component via the onFruitSelected callback
     setSelectedFruit(fruit);
     onFruitSelected(fruit);
+
+    // Play the audio for the selected fruit
+    if (fruit.audioPath) {
+      const audio = new Audio(fruit.audioPath);
+      audio.play()
+    }
   };
 
   return (
