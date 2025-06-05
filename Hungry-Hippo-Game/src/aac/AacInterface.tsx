@@ -9,6 +9,7 @@ interface AacInterfaceProps {
 const AacInterface: React.FC<AacInterfaceProps> = ({ onFruitSelected }) => {
   // State to keep track of the selected fruit
   const [selectedFruit, setSelectedFruit] = React.useState<Fruit | null>(null);
+  const currentAudioRef = React.useRef<HTMLAudioElement | null>(null);
 
   const handleFruitClick = (fruit: Fruit) => {
     // Update the selected fruit when an AAC item is clicked
@@ -20,6 +21,7 @@ const AacInterface: React.FC<AacInterfaceProps> = ({ onFruitSelected }) => {
     if (fruit.audioPath) {
       const audio = new Audio(fruit.audioPath);
       audio.play()
+      currentAudioRef.current = audio;
     }
   };
 

@@ -65,7 +65,7 @@ function LandingPage() {
         {code.map((char, i) => (
           <input
             key={i}
-            ref={(el) => (inputsRef.current[i] = el)}
+            ref={(el) => void (inputsRef.current[i] = el)}
             type="text"
             value={char}
             onChange={(e) => handleChange(e.target.value, i)}
