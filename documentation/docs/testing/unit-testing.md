@@ -3,6 +3,8 @@ sidebar_position: 1
 ---
 # Unit tests
 
+[View Full Test Coverage Report](coverage/index.html)
+
 Frontend testing is done via Vitest and React Testing Library. 
 
 | Student | Library | Why We Chose It | Key Features | Modules Covered |
