@@ -12,6 +12,7 @@ import { EventBus } from '../EventBus';
 import { AAC_DATA } from '../../Foods';
 import { WalkStrategy } from '../moveStrategy/WalkStrategy';
 import { Hippo } from '../Hippo';
+import { Scoreboard } from './Scoreboard';
 
 /**
  * The Game class defines a Phaser scene that initializes the hippo player,
@@ -45,20 +46,22 @@ export class Game extends Scene
     */
     private foodSpawnTimer: Phaser.Time.TimerEvent; // store timer reference
 
-
-    private playerScores: Record<string, number> = {};
-
-    private scoreText: Phaser.GameObjects.Text;
-
+    /**
+     * Constructor for tracking each player.
+     */
     private players: Record<string, Phaser.Physics.Arcade.Sprite> = {};
 
 
     private cursors: Phaser.Types.Input.Keyboard.CursorKeys;
 
     /**
+     * Constructor for creating the scoreboard.
+     */
+    private scoreboard: Scoreboard;
+
+    /**
      * Constructor for the Game scene. Sets the scene key.
     */
-
     constructor ()
     {
         super('Game');
@@ -122,12 +125,7 @@ export class Game extends Scene
             console.log(`[EAT] ${foodGO.texture.key} eaten by hippo`);
             foodGO.destroy();
 
-            this.playerScores["host"] += 1
-            this.updateScoreText();
-
-            EventBus.emit('scoreUpdate', {
-                scores: { ...this.playerScores }
-            });
+            this.scoreboard.incrementScore("host");
         }
     }
 
@@ -148,20 +146,27 @@ export class Game extends Scene
     
         this.foods = this.physics.add.group();
 
-        this.playerScores["host"] = 0;
-    
-        this.physics.add.overlap(this.hippo, this.foods, this.handleFoodCollision, undefined, this);
+        // Initialize scoreboard and add host player
+        this.scoreboard = new Scoreboard(this);
+        this.scoreboard.addPlayer('host');
 
-        this.scoreText = this.add.text(32, 32, '', {
-            fontSize: '24px',
-            color: '#000',
-            fontFamily: 'Arial',
-            align: 'left',
-            backgroundColor: 'rgba(255, 255, 255, 0.8)',
-            padding: { x: 10, y: 10 }
-        });
+        this.physics.add.overlap(this.hippo, this.foods, this.handleFoodCollision, undefined);
+        
+        // Create WebSocket connection for receiving score updates
+        const socket = new WebSocket('ws://localhost:8080');
 
-        this.updateScoreText();
+        socket.addEventListener('message', (event) => {
+            const data = JSON.parse(event.data);
+
+            if(data.type === 'scoreUpdate')
+            {
+                const scores = data.scores;
+                for(const [playerId, score] of Object.entries(scores))
+                {
+                    this.scoreboard.setScore(playerId, score as number);
+                }
+            }
+        })
     }
     
 
@@ -250,10 +255,7 @@ export class Game extends Scene
 
     addPlayer(playerId: string, x: number, y: number)
     {
-        if(!(playerId in this.playerScores))
-        {
-            this.playerScores[playerId] = 0;
-        }
+        this.scoreboard.addPlayer(playerId);
         if(!(playerId in this.players))
         {
             const playerSprite = this.physics.add.sprite(x, y, 'character', 0);
@@ -290,20 +292,6 @@ export class Game extends Scene
         fruit: Phaser.GameObjects.GameObject
     ) => {
         fruit.destroy();
-        this.playerScores[playerId] += 1;
-
-        this.updateScoreText();
-
-        EventBus.emit('scoreUpdate', {
-            scores: {...this.playerScores}
-        });
+        this.scoreboard.incrementScore(playerId);
     };
-
-    private updateScoreText() 
-    {
-        const lines = Object.entries(this.playerScores)
-            .map(([player, score]) => `${player}: ${score}`)
-            .join('\n');
-        this.scoreText.setText(lines);
-    }
 }
