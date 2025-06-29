@@ -212,8 +212,10 @@ export class Game extends Scene
         console.log(`[SPAWN] ${foodKey} launched ${direction} (${degrees.toFixed(0)}°)`); // Logs direction food is launched
 
         food.setVelocity(velocityX, velocityY);
-        food.setBounce(0.2);
+        food.setBounce(1, 1);
         food.setCollideWorldBounds(true);
+        food.setDamping(false);
+        food.setDrag(0);
     }
 
     public setTargetFood(foodId: string) {
@@ -291,6 +293,12 @@ export class Game extends Scene
             EventBus.emit('scoreUpdate', {
                 scores: {...this.playerScores}
             });
+
+            EventBus.emit('fruit-eaten', {
+                foodId,
+                x: fruit.x,
+                y: fruit.y
+            });
         }
     };
 
@@ -300,5 +308,20 @@ export class Game extends Scene
             .map(([player, score]) => `${player}: ${score}`)
             .join('\n');
         this.scoreText.setText(lines);
+    }
+
+    /**
+     * Removes a fruit from the scene if it's close enough to the given position.
+     * Used to sync fruit destruction across clients when a player eats one.
+    */
+    public removeFruitAt(foodId: string, x: number, y: number) {
+        const radius = 20;
+        this.foods.children.each((child: any) => {
+            if (child.texture.key === foodId && Phaser.Math.Distance.Between(child.x, child.y, x, y) < radius) {
+                child.destroy();
+                return false;
+            }
+            return true;
+        });
     }
 }
