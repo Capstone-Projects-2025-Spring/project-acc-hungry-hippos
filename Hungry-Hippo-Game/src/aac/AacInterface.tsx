@@ -7,6 +7,8 @@ import { useWebSocket } from "../contexts/WebSocketContext";
  */
 interface AacInterfaceProps {
   sessionId: string;
+  userId?: string;
+  role?: string;
 }
 
 /**
@@ -14,7 +16,7 @@ interface AacInterfaceProps {
  * @param {AacInterfaceProps} props - The properties for the component.
  * @returns {JSX.Element} The rendered component.
  */
-const AacInterface: React.FC<AacInterfaceProps> = ({ sessionId }) => {
+const AacInterface: React.FC<AacInterfaceProps> = ({ sessionId,  userId, role  }) => {
   const [selectedFood, setSelectedFood] = React.useState<AacFood | null>(null);
   const [selectedCategory, setSelectedCategory] = React.useState<string | null>(null);
   const [isAudioPlaying, setIsAudioPlaying] = React.useState(false);
@@ -35,10 +37,17 @@ const AacInterface: React.FC<AacInterfaceProps> = ({ sessionId }) => {
       sendMessage({
         type: "AAC_FOOD_SELECTED",
         payload: {
-          sessionId, food
+          sessionId, userId, role, food
         }
       });
     }
+    console.log("Sending AAC_FOOD_SELECTED", {
+  sessionId,
+  userId,
+  role,
+  food
+});
+
     if (food.audioPath) {
       const audio = new Audio(food.audioPath);
       setIsAudioPlaying(true);

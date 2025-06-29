@@ -79,14 +79,28 @@ function RoleSelect() {
     }
     setError(false);
 
-    // Navigate to the next page (the game page for now)
+    // Navigate to the next page depending on the selected role.
     // and pass ALL player info in the state for the next page to use.
-    navigate(`/gamepage/${sessionId}/${username}`, {
-      state: {
+    if (role === 'AAC User') {
+    navigate(`/aac/${sessionId}/${username}/${role}`, {
+        state: {
         userId: username,
-        role: role
-      }
+        role
+        }
     });
+    } else if (role === 'Hippo Player') {
+    navigate(`/hippo/${sessionId}/${username}/${role}`, {
+        state: {
+        userId: username,
+        role
+        }
+    });
+    } else {
+      // If the role is not recognized, show an error.
+      alert('Invalid role selected. Please try again.');
+      return;
+    }
+
   };
 
   /**
