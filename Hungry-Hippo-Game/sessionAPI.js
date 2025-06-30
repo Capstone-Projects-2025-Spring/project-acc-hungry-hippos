@@ -180,6 +180,7 @@ wss.on('connection', (ws) => {
         const { sessionId, userId, role } = data.payload;
         ws.sessionId = sessionId;
         ws.userId = userId;
+        ws.role = role;
 
         if (!sessions[sessionId]) {
           sessions[sessionId] = new Set(); 
@@ -204,7 +205,38 @@ wss.on('connection', (ws) => {
             userId, role 
           } 
         });
+        // Collect all users in the session
+        const usersInSession = Array.from(sessions[sessionId])
+          .filter(client => client.readyState === WebSocket.OPEN)
+          .map(client => ({
+            userId: client.userId,
+            role: client.role
+          }));
+
+        // Send full user list
+        broadcast(sessionId, {
+          type: 'USERS_LIST_UPDATE',
+          payload: {
+            users: usersInSession
+          }
+        });
+        console.log(`[WSS] Broadcasting USERS_LIST_UPDATE to ${sessionId}:`, usersInSession);
+
+
       }
+
+      // When the presenter clicks "Start Game", broadcast to all clients in the session
+      // to signal that the game has begun. Clients will navigate to the game screen.
+      if (data.type === 'START_GAME') {
+        const { sessionId } = data.payload;
+        console.log(`[WSS] Start game received for session ${sessionId}`);
+
+        broadcast(sessionId, {
+          type: 'START_GAME_BROADCAST',
+          payload: { sessionId }
+        });
+      }
+
 
       // When an AAC user selects a food, broadcast it to the session
       if (data.type === 'AAC_FOOD_SELECTED') {

@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import styles from './RoleSelect.module.css';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import ButtonClick from '../../components/ButtonClick/ButtonClick';
+import { useWebSocket } from '../../contexts/WebSocketContext';
 
 /**
  * RoleSelect - React component for selecting a player's role in the game.
@@ -56,8 +57,29 @@ function RoleSelect() {
   const [role, setRole] = useState<string>(''); 
   const [error, setError] = useState<boolean>(false);
   const [username] = useState(location.state?.userId || ''); 
+  const [waiting, setWaiting] = useState(false);
+  const { gameStarted } = useWebSocket();
+  const { sendMessage } = useWebSocket();
 
+  // Navigate to the next page depending on the selected role.
+  // and pass ALL player info in the state for the next page to use.
+  // Effect to navigate when gameStarted becomes true
+  useEffect(() => {
+    if (!waiting) return; // Only navigate if waiting is true (after Next clicked)
 
+    if (gameStarted) {
+      console.log('[RoleSelect] Game started, navigating...');
+      if (role === 'AAC User') {
+        navigate(`/aac/${sessionId}/${username}/${role}`, {
+          state: { userId: username, role },
+        });
+      } else if (role === 'Hippo Player') {
+        navigate(`/hippo/${sessionId}/${username}/${role}`, {
+          state: { userId: username, role },
+        });
+      }
+    }
+  }, [gameStarted, waiting, role, sessionId, username, navigate]);
 /**
  * Handles the logic for starting the game after a role is selected.
  *
@@ -72,22 +94,27 @@ function RoleSelect() {
  * @function handleStart
  * @returns {Promise<void>} Resolves after role is updated and user is navigated to next page.
  */
-  const handleStart = () => {
+    const handleStart = () => {
     if (!role) {
-      setError(true);
-      return;
+        setError(true);
+        return;
     }
     setError(false);
 
-    // Navigate to the next page (the game page for now)
-    // and pass ALL player info in the state for the next page to use.
-    navigate(`/gamepage/${sessionId}/${username}`, {
-      state: {
+    sendMessage({
+        type: 'PLAYER_JOIN',
+        payload: {
+        sessionId,
         userId: username,
-        role: role
-      }
+        role,
+        },
     });
-  };
+
+    setWaiting(true);
+
+
+    };
+
 
   /**
    * Updates the role state as the user selects an option from the dropdown.
@@ -115,24 +142,26 @@ function RoleSelect() {
           ✖
         </button>
 
-        <h2 className={styles.sessionText2}>You are: {username || '_____'} </h2>
-
-        <div className={styles.roleSelectGroup}>
-          <select
-            id="role-select"
-            value={role}
-            onChange={handleRoleChange}
-            className={`${styles.roleDropdown} ${error ? styles.errorBorder : ''}`}
-          >
-            <option value="" disabled>
-              Select role
-            </option>
-            <option value="Hippo Player">Hippo Player</option>
-            <option value="AAC User">AAC User</option>
-          </select>
-        </div>
-
-        <ButtonClick text="Next" onClick={handleStart} />
+        {waiting ? (
+          <h2 className={styles.sessionText2}>Waiting for game to start...</h2>
+        ) : (
+          <>
+            <h2 className={styles.sessionText2}>You are: {username || '_____'} </h2>
+            <div className={styles.roleSelectGroup}>
+              <select
+                id="role-select"
+                value={role}
+                onChange={handleRoleChange}
+                className={`${styles.roleDropdown} ${error ? styles.errorBorder : ''}`}
+              >
+                <option value="" disabled>Select role</option>
+                <option value="Hippo Player">Hippo Player</option>
+                <option value="AAC User">AAC User</option>
+              </select>
+            </div>
+            <ButtonClick text="Next" onClick={handleStart} />
+          </>
+        )}
       </div>
     </div>
   );

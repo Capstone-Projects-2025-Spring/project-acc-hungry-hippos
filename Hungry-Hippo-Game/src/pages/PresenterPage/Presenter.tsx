@@ -1,5 +1,9 @@
 import styles from './Presenter.module.css';
 import { useNavigate, useParams } from 'react-router-dom';
+import { useWebSocket } from '../../contexts/WebSocketContext';
+import UserList from '../../components/UserList/UserList';
+import { useEffect } from 'react';
+import ButtonClick from '../../components/ButtonClick/ButtonClick';
 
 /**
  * Presenter - React component that displays the session ID to the host after creating a new game.
@@ -8,45 +12,49 @@ import { useNavigate, useParams } from 'react-router-dom';
  * - Allows the host to view the game session code.
  * - Provides instructions to share the session code with other players.
  * - Includes a button to cancel the new game and return to the landing page.
+ * - Shows a waiting lobby with connected users and their roles.
  *
- * Data Fields:
- * - sessionId: string | undefined
- *   - Retrieved from the URL parameters using `useParams`.
- *   - Represents the unique 5-character code identifying the game session.
- *
- * Methods:
- * - Presenter()
- *   - Purpose: Initializes the component and handles navigation.
- *   - Pre-condition: Route must include a `:sessionId` param (e.g., `/Presenter/ABCDE`).
- *   - Post-condition: Renders the presenter screen with the session ID.
- *   - Parameters: None
- *   - Return value: JSX.Element
- *   - Exceptions thrown: None internally, but improper routing (e.g., missing session ID)
- *     may result in `sessionId` being undefined. This should be handled appropriately.
- *
- * UI Methods:
- * - onClick (inline anonymous function)
- *   - Purpose: Navigates the user back to the landing page.
- *   - Pre-condition: User clicks the "Cancel New Game" button.
- *   - Post-condition: User is redirected to `/`; session ID is not currently cleared.
- *   - Parameters: None
- *   - Return value: void
- *   - Exceptions thrown: None expected. Errors in navigation should be caught by router-level error boundaries.
- *
- * TODO:
- * - Add logic to delete or clear the created session ID from the backend when "Cancel New Game" is pressed.
- * - Validate that `sessionId` is present before rendering.
  */
 function Presenter() {
   const navigate = useNavigate();
   const { sessionId } = useParams<{ sessionId: string }>();
-  
+  const presenterId = 'presenter'; 
+  const { sendMessage, connectedUsers, isConnected } = useWebSocket();
+  // Join session as "Presenter" to receive updates
+  useEffect(() => {
+    if (sessionId && isConnected) {
+      sendMessage({
+        type: 'PLAYER_JOIN',
+        payload: { sessionId, userId: presenterId, role: 'Presenter' }
+      });
+    }
+  }, [sessionId, isConnected, sendMessage]);
+
+
   /**
    * Handler for clicking the close button.
    * Navigates the user back to the landing page.
    */
   const handleCancel = () => {
     navigate('/');
+  };
+
+  // Count roles connected excluding presenter
+  const hippoCount = connectedUsers.filter(u => u.role === 'Hippo Player').length;
+  const aacCount = connectedUsers.filter(u => u.role === 'AAC User').length;
+
+  // Function to handle start game 
+  const handleStartGame = () => {
+    console.log('Start Game button clicked, sending START_GAME message');
+    if (!sessionId) {
+      console.error('No sessionId available');
+      return;
+    }
+    sendMessage({
+      type: 'START_GAME',
+      payload: { sessionId },
+    });
+    navigate(`/presenter-game/${sessionId}`);
   };
 
   return (
@@ -70,13 +78,19 @@ function Presenter() {
 
         <h1 className={styles.sessionText2}>Game Code: {sessionId}</h1>
         <h3 className={styles.sessionText2}>
-          Share this with other players!
+          At least one Hippo & AAC device 
           <br />
-          Waiting for game to start...
+          must join to start the game.
         </h3>
+        <h2 className={styles.sessionText2}>Players Joined:</h2>
+        <UserList users={connectedUsers.filter(u => u.role !== 'Presenter')} />
+        <br />
+
+        {hippoCount >= 1 && aacCount >= 1 && (
+          <ButtonClick text="Start Game" onClick={handleStartGame} />
+        )}
       </div>
     </div>
-    
   );
 }
 

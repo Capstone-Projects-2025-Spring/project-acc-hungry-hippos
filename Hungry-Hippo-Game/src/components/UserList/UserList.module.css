@@ -1,0 +1,20 @@
+.userListContainer {
+  text-align: center; 
+  color: black;   
+  margin: 0 auto;    
+}
+
+p {
+  color: black;
+  text-align: center;
+}
+
+.userList {
+  list-style-type: none; 
+  padding: 0;
+  margin: 0 auto;
+  display: inline-block; 
+  text-align: left;      
+}
+
+
