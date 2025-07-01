@@ -10,6 +10,7 @@ import { forwardRef, useEffect, useLayoutEffect, useRef } from 'react';
 import StartGame from './game/main';
 import { EventBus } from './game/EventBus';
 import { AAC_DATA } from './Foods';
+import { useWebSocket } from './contexts/WebSocketContext';
 
 /**
  * Interface to expose the Phaser game and current scene instance to parent components via ref.
@@ -39,6 +40,7 @@ interface IProps
 export const PhaserGame = forwardRef<IRefPhaserGame, IProps>(function PhaserGame({ currentActiveScene }, ref)
 {
     const game = useRef<Phaser.Game | null>(null!);
+    const { isConnected, lastMessage, sendMessage } = useWebSocket();
 
     /**
      * useLayoutEffect creates the Phaser.Game instance when the component mounts,
@@ -86,6 +88,11 @@ export const PhaserGame = forwardRef<IRefPhaserGame, IProps>(function PhaserGame
             if ('setFoodKeys' in scene_instance && typeof scene_instance['setFoodKeys'] === 'function') {
                 scene_instance['setFoodKeys'](foodKeys);
             }
+
+            if('setSendMessage' in scene_instance && typeof scene_instance['setSendMessage'] === 'function') 
+            {
+                (scene_instance as any).setSendMessage(sendMessage);
+            }
             
             if (currentActiveScene && typeof currentActiveScene === 'function')
             {
@@ -116,4 +123,10 @@ export const PhaserGame = forwardRef<IRefPhaserGame, IProps>(function PhaserGame
         <div id="game-container"></div>
     );
 
+    useEffect(() => {
+        if(lastMessage?.type === 'scoreUpdate')
+        {
+            EventBus.emit('external-score-update', lastMessage.scores);
+        }
+    }, [lastMessage]);
 });
