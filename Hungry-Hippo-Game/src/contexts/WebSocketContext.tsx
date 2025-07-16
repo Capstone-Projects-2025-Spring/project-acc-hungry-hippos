@@ -40,7 +40,17 @@ export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       const data = JSON.parse(event.data);
       // console.log('[WS_CONTEXT] Message from server:', data);
 
+      if (data.type === 'TIMER_UPDATE') {
+        console.log(`[WS_CONTEXT] Timer update: ${data.secondsLeft} seconds left`);
+        EventBus.emit('TIMER_UPDATE', data.secondsLeft);
 
+        setLastMessage({
+          type: 'TIMER_UPDATE',
+          payload: { secondsLeft: data.secondsLeft },
+        });
+
+        return;
+      }
 
       if (data.type === 'LAUNCH_FOOD') {
         const { foodKey, angle } = data.payload;
@@ -66,6 +76,8 @@ export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         console.log('[WS_CONTEXT] Game started!');
         setGameStarted(true);
         setLastMessage(data);
+
+        EventBus.emit('start-game');
         return;
       }
 
@@ -98,10 +110,16 @@ export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     }
   }, []);
 
+  // Method to start timer
+  const startTimer = useCallback(() => {
+    sendMessage({ type: 'startTimer' });
+  }, [sendMessage]);
+
   const value = {
     isConnected,
     lastMessage,
     sendMessage,
+    startTimer,
     clearLastMessage,
     connectedUsers,
     gameStarted,
