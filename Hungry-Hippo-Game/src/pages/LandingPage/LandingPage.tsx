@@ -1,6 +1,5 @@
 import { useNavigate } from 'react-router-dom';
 import styles from './LandingPage.module.css';
-import ButtonClick from '../../components/ButtonClick/ButtonClick';
 import { useRef, useState, useEffect } from 'react';
 import { useWebSocket } from '../../contexts/WebSocketContext';
 
@@ -218,7 +217,9 @@ function LandingPage() {
       >
         No code? Create new game!
       </p>
-      <ButtonClick text="Join Game" onClick={handleStart} />
+      <button className={styles.joinButton} onClick={handleStart}>
+        Join Game
+      </button>
     </div>
   );
 }
