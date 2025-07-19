@@ -65,92 +65,171 @@
   transform: scale(1.1);
 }
 
-/* ---------------- Username Text ---------------- */
-.sessionText,
-.sessionText2 {
+
+/* ---------------- Role Selection ---------------- */
+
+.selectRoleTitle {
+    color: black;
+    font-family: 'Fredoka', sans-serif;
+    font-weight: 500;
+    font-size: 1.25rem;
+    margin-bottom: 1rem;
+    text-align: center;
+}
+
+.roleChoiceContainer {
+    display: flex;
+    gap: 1rem;
+    width: 100%;
+    max-width: 500px;
+    justify-content: center;
+}
+
+.roleChoiceButton {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 1rem;
+    border: 3px solid transparent;
+    border-radius: 12px;
+    background-color: rgba(255, 255, 255, 0.6);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: 'Fredoka', sans-serif;
+    font-size: 1rem;
+    font-weight: 500;
+}
+
+.roleChoiceButton:hover {
+    transform: translateY(-3px);
+    background-color: rgba(255, 255, 255, 0.8);
+}
+
+.roleChoiceButton.selected {
+  border-color: #6ee993;
+  background-color: #6ee993;
+}
+
+.roleChoiceButton:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    filter: grayscale(80%);
+}
+
+.roleIcon {
+    height: 90px;
+    width: auto;
+    object-fit: contain;
+}
+
+/* ---------------- Hippo Color Selection ---------------- */
+.colorSelectionContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+}
+
+.selectColorTitle {
   color: black;
+  font-family: 'Fredoka', sans-serif;
+  font-weight: 525;
+  font-size: 1.25rem;
+  margin-top: 0rem;
+  text-align: center;;
+}
+
+.hippoGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+  max-width: 500px;
+  width: auto;
+  justify-content: center;
+}
+
+.colorButton {
+  aspect-ratio: 1 / 1;
+  padding: 0.5rem;
+  border: 3px solid transparent;
+  border-radius: 12px;
+  background-color: rgba(255, 255, 255, 0.8);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.colorButton:hover {
+  transform: scale(1.05);
+}
+
+.colorButton.selected {
+  border-color: #6ee993;
+  transform: scale(1.1);
+  box-shadow: 0 0 15px rgba(110, 233, 147, 0.7);
+  background-color: #6ee993;
+}
+
+.colorButton:disabled {
+  opacity: 0.4;
+  filter: grayscale(80%);
+  cursor: not-allowed;
+  transform: none;
+}
+
+.hippoImage {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+/* ---------------- Next Button ---------------- */
+.nextButton {
+  background-color: rgba(255, 255, 255, 0.8);
+  color: black;
+  font-family: 'Fredoka', sans-serif;
+  font-size: 1.35rem;
+  font-weight: 500;
+  border-radius: 1rem;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-top: 0.5rem;
+  width: 7rem;
+  height: 2.5rem;
+}
+
+.nextButton:hover {
+  transform: translateY(-3px);
+}
+
+.nextButton:disabled {
+  background-color: #cccccc;
+  color: #666666;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* ---------------- Waiting For Game ---------------- */
+.waitingText {
+  color: black;
+  font-size: 1.5rem;
   margin-bottom: 1rem;
   text-align: center;
-}
-
-.sessionText2 {
-  font-weight: 700;
+  font-weight: 550;
   width: 100%;
   max-width: 320px;
+  font-family: 'Fredoka', sans-serif;
 }
 
-/* ---------------- Dropdown Container ---------------- */
-.roleSelectGroup {
-  position: relative;
-  width: 100%;
-  max-width: 220px;
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  box-sizing: border-box;
-  padding-bottom: 6px; 
-}
-
-/* ---------------- Dropdown Styling ---------------- */
-.roleDropdown {
-  flex: 1;
-  width: 100%;
-  padding: 1rem 3rem 1rem 1rem; /* right padding for arrow */
-  font-size: 1.2rem;
-  border-radius: 1.5rem;
-  border: 2px solid orange; /* bright orange border */
-  background-color: #FFF3E0; /* light orange background */
-  cursor: pointer;
-  appearance: none;
-  -webkit-appearance: none;
-  -moz-appearance: none;
-  font-weight: 700;
-  color: #000;
-  user-select: none;
-  box-sizing: border-box;
-  transition: box-shadow 0.3s ease;
-}
-
-.roleDropdown:hover,
-.roleDropdown:focus {
-  box-shadow: 0 0 12px #d67600;
-  outline: none;
-}
-
-/* ---------------- Custom Arrow ---------------- */
-.roleSelectGroup::after {
-  content: "";
-  position: absolute;
-  top: 50%;
-  right: 1rem;
-  width: 0;
-  height: 0;
-  pointer-events: none;
-  border-left: 10px solid transparent;
-  border-right: 10px solid transparent;
-  border-top: 10px solid #f44336;
-  transform: translateY(-50%);
-  box-sizing: content-box;
-}
 
 @media (max-width: 500px) {
   .roleContainer {
     width: 100%;
     padding: 1.2rem;
     border-radius: 1.2rem;
-  }
-
-  .sessionText,
-  .sessionText2 {
-    font-size: 1.4rem;
-  }
-
-  .roleDropdown {
-    font-size: 1.5rem;
-  }
-
-  .roleSelectGroup {
-    max-width: 100%;
   }
 }
 

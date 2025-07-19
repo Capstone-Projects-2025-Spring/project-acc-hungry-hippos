@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import styles from './RoleSelect.module.css';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
-import ButtonClick from '../../components/ButtonClick/ButtonClick';
 import { useWebSocket } from '../../contexts/WebSocketContext';
+import { HIPPO_COLORS } from '../../config/hippoColors';  
 
 /**
  * RoleSelect - React component for selecting a player's role in the game.
@@ -61,10 +61,13 @@ function RoleSelect() {
   };
 
   const [role, setRole] = useState<string>(''); 
-  const [error, setError] = useState<boolean>(false);
+  const [selectedColor, setSelectedColor] = useState<string | null>(null);
   const [username] = useState(location.state?.userId || generateUsername());
   const [waiting, setWaiting] = useState(false);
-  const { connectedUsers, gameStarted, sendMessage, isConnected } = useWebSocket();
+  const { connectedUsers, gameStarted, sendMessage, isConnected, lastMessage, clearLastMessage } = useWebSocket();
+
+  // State to track colors already taken by connected users
+  const [takenColors, setTakenColors] = useState<string[]>([]);
 
   // Count connected users by role
   const HIPPO_PLAYER_LIMIT = 4;
@@ -73,10 +76,6 @@ function RoleSelect() {
   const aacUsersCount = connectedUsers.filter(user => user.role === 'AAC User').length;
   const isHippoRoleFull = hippoPlayersCount >= HIPPO_PLAYER_LIMIT;
   const isAacRoleFull = aacUsersCount >= AAC_USER_LIMIT;
-  console.log('aacUsersCount:', aacUsersCount);
-  console.log('hippoPlayersCount:', hippoPlayersCount);
-
-
 
   // Navigate to the next page depending on the selected role.
   // and pass ALL player info in the state for the next page to use.
@@ -92,15 +91,14 @@ function RoleSelect() {
         });
       } else if (role === 'Hippo Player') {
         navigate(`/hippo/${sessionId}/${username}/${role}`, {
-          state: { userId: username, role },
+          state: { userId: username, role, color: selectedColor },
         });
       }
     }
-  }, [gameStarted, waiting, role, sessionId, username, navigate]);
+  }, [gameStarted, waiting, role, selectedColor, sessionId, username, navigate]);
 
   useEffect(() => {
     if (sessionId && username && isConnected) {
-      console.log(`[RoleSelect] Sending PLAYER_JOIN message for session ${sessionId} with user ${username}`);
       sendMessage({
         type: 'PLAYER_JOIN',
         payload: {
@@ -111,54 +109,80 @@ function RoleSelect() {
       });
     }
   }, [sessionId, username, isConnected, sendMessage]);
-/**
- * Handles the logic for starting the game after a role is selected.
- *
- * <p>This function validates that a role has been selected. It then sends a POST request
- * to the server to update the user's role for the current session. Upon a successful
- * update, the user is navigated to the appropriate game page based on their role.
- *
- * <p>If no role is selected, an error state is triggered and the function exits early.
- * If the server fails to update the role, an alert is shown to the user.
- *
- * @async
- * @function handleStart
- * @returns {Promise<void>} Resolves after role is updated and user is navigated to next page.
- */
-    const handleStart = () => {
-    if (!role) {
-        setError(true);
+
+  // Listen for updates on which colors are taken by other players
+  useEffect(() => {
+    if (lastMessage?.type === 'COLOR_UPDATE') {
+      setTakenColors(lastMessage.payload.takenColors);
+      clearLastMessage?.();
+    }
+  }, [lastMessage, clearLastMessage]);
+
+  // Reset role if AAC User is selected and the role is full
+  useEffect(() => {
+    if (role === 'AAC User' && isAacRoleFull) {
+        setRole('');
+    }
+  }, [connectedUsers, role, isAacRoleFull]);
+  /**
+   * Handles the logic for starting the game after a role is selected.
+   *
+   * <p>This function validates that a role has been selected. It then sends a POST request
+   * to the server to update the user's role for the current session. Upon a successful
+   * update, the user is navigated to the appropriate game page based on their role.
+   *
+   * <p>If no role is selected, an error state is triggered and the function exits early.
+   * If the server fails to update the role, an alert is shown to the user.
+   *
+   * @async
+   * @function handleStart
+   * @returns {Promise<void>} Resolves after role is updated and user is navigated to next page.
+   */
+  const handleStart = () => {
+    if (!role && !selectedColor) {
         return;
     }
-    setError(false);
 
     sendMessage({
         type: 'PLAYER_JOIN',
         payload: {
-        sessionId,
-        userId: username,
-        role,
+          sessionId,
+          userId: username,
+          role,
+          color: selectedColor,
         },
     });
 
     setWaiting(true);
-    };
+  };
 
-
-  /**
-   * Updates the role state as the user selects an option from the dropdown.
-   * Clears error if previously triggered.
-   *
-   * @param e - The change event triggered by selecting a dropdown option.
-   */
-  const handleRoleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setRole(e.target.value);
-    if (error) setError(false);
+  // Handle role selection
+  const handleRoleSelect = (selectedRole: string) => {
+    // If switching from Hippo Player to AAC User, release the color
+    if (role === 'Hippo Player' && selectedColor) {
+      sendMessage({
+        type: 'SELECT_COLOR',
+        payload: { sessionId, userId: username, color: null }
+      });
+    }
+    setRole(selectedRole);
+    setSelectedColor(null);
   };
 
   const handleCancel = () => {
     navigate('/');
   };
+
+  // Handle color selection for Hippo Player
+  const handleColorSelect = (color: string) => {
+    setSelectedColor(color);
+    sendMessage({
+        type: 'SELECT_COLOR',
+        payload: { sessionId, userId: username, color }
+    });
+  };
+
+  const isNextDisabled = !role || (role === 'Hippo Player' && !selectedColor)
 
   return (
     <div className={styles.containerImg}>
@@ -172,27 +196,54 @@ function RoleSelect() {
         </button>
 
         {waiting ? (
-          <h2 className={styles.sessionText2}>Waiting for game to start...</h2>
+          <h2 className={styles.waitingText}>Waiting for game to start...</h2>
         ) : (
           <>
-            <h2 className={styles.sessionText2}>You are: {username || '_____'} </h2>
-            <div className={styles.roleSelectGroup}>
-              <select
-                id="role-select"
-                value={role}
-                onChange={handleRoleChange}
-                className={`${styles.roleDropdown} ${error ? styles.errorBorder : ''}`}
+            {/* Role Selection Header */}
+            <h3 className={styles.selectRoleTitle}>Select Your Role</h3>
+            <div className={styles.roleChoiceContainer}>
+              {/* Hippo Player Choice Button */}
+              <button 
+                className={`${styles.roleChoiceButton} ${role === 'Hippo Player' ? styles.selected : ''}`}
+                onClick={() => handleRoleSelect('Hippo Player')}
+                disabled={isHippoRoleFull}
               >
-                <option value="" disabled>Select a role</option>
-                <option value="Hippo Player" disabled={isHippoRoleFull}>
-                  Hippo Player {isHippoRoleFull ? '(Full)' : ''}
-                </option>
-                <option value="AAC User" disabled={isAacRoleFull}>
-                  AAC User {isAacRoleFull ? '(Full)' : ''}
-                </option>
-              </select>
+                <img src="/assets/hippos/outlineHippo.png" alt="Hippo Player" className={styles.roleIcon} />
+                <span>Hippo Player {isHippoRoleFull ? '(Full)' : ''}</span>
+              </button>
+
+              {/* AAC User Choice Button */}
+              <button 
+                className={`${styles.roleChoiceButton} ${role === 'AAC User' ? styles.selected : ''}`}
+                onClick={() => handleRoleSelect('AAC User')}
+                disabled={isAacRoleFull}
+              >
+                <img src="/assets/aacDevice.png" alt="AAC User" className={styles.roleIcon} />
+                <span>AAC User {isAacRoleFull ? '(Full)' : ''}</span>
+              </button>
             </div>
-            <ButtonClick text="Next" onClick={handleStart} />
+
+            {/* Color Selection for Hippo Player */}
+            {role === 'Hippo Player' && (
+              <div className={styles.colorSelectionContainer}>
+                  <h3 className={styles.selectColorTitle}>Choose your Hippo</h3>
+                  <div className={styles.hippoGrid}>
+                      {HIPPO_COLORS.map((hippo) => (
+                          <button
+                              key={hippo.color}
+                              className={`${styles.colorButton} ${selectedColor === hippo.color ? styles.selected : ''}`}
+                              disabled={takenColors.includes(hippo.color) && hippo.color !== selectedColor}
+                              onClick={() => handleColorSelect(hippo.color)}
+                          >
+                              <img src={hippo.imgSrc} alt={hippo.color} className={styles.hippoImage} />
+                          </button>
+                      ))}
+                  </div>
+              </div>
+            )}
+            <button className={styles.nextButton} onClick={handleStart} disabled={isNextDisabled}>
+              Next
+            </button>
           </>
         )}
       </div>

@@ -365,6 +365,30 @@ wss.on('connection', (ws) => {
         });
       }
 
+      // When a player selects a color, broadcast it to the session
+      if (data.type === 'SELECT_COLOR') {
+        const { sessionId, userId, color } = data.payload;
+        if (sessions[sessionId]) {
+          // Find the client who sent the message and assign them the color
+          for (const client of sessions[sessionId]) {
+            if (client.userId === userId) {
+              client.color = color;
+              break;
+            }
+          }
+
+          // Collect all taken colors in the session
+          const takenColors = Array.from(sessions[sessionId])
+            .map(client => client.color)
+            .filter(c => c);
+
+          broadcast(sessionId, {
+            type: 'COLOR_UPDATE',
+            payload: { takenColors }
+          });
+        }
+      }
+
     } catch (error) {
         console.error('WSS Error processing message:', error);
     }
@@ -395,6 +419,16 @@ wss.on('connection', (ws) => {
         payload: {
           users: usersInSession
         }
+      });
+
+      // After a player leaves, re-calculate the taken colors and notify everyone.
+      const takenColors = Array.from(sessions[sessionId])
+        .map(client => client.color)
+        .filter(c => c);
+
+      broadcast(sessionId, {
+        type: 'COLOR_UPDATE',
+        payload: { takenColors }
       });
       console.log(`WSS Player left, broadcasting updated USERS_LIST_UPDATE to ${sessionId}:`, usersInSession);
     }
