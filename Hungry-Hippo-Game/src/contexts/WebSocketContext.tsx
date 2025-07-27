@@ -100,6 +100,12 @@ export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         setLastMessage(data);
         return;
       }
+
+      if (data.type === 'POWER_UP_ACTIVATED') {
+        console.log(`[WS_CONTEXT] Power-up activated:`, data.payload);
+        EventBus.emit('power-up-activated', data.payload);
+        return;
+      }
       setLastMessage(data);
     };
 
@@ -133,6 +139,22 @@ export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     sendMessage({ type: 'START_TIMER', payload: { sessionId } });
   }, [sendMessage, sessionId]);
 
+  // Method to trigger the power up
+  const triggerPowerUp = useCallback((powerUpType: string, userId: string) => {
+    if (!sessionId) {
+      console.error('No sessionId set. Cannot send Power-Up');
+      return;
+    }
+    sendMessage({
+      type: 'USE_POWER_UP',
+      payload: {
+        sessionId,
+        powerUpType,
+        userId,
+      },
+    });
+  }, [sendMessage, sessionId]);
+
   const value = {
     isConnected,
     lastMessage,
@@ -142,6 +164,7 @@ export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     connectedUsers,
     gameStarted,
     sessionId,
+    triggerPowerUp,
   };
 
   return (
