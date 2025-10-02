@@ -10,6 +10,7 @@ interface IWebSocketContext {
   connectedUsers: { userId: string; role: string; color?: string }[];
   gameStarted: boolean;
   resetGameState: () => void;
+  gameMode: 'Easy' | 'Medium' | 'Hard' | null; // currently selected game mode (from START_GAME_BROADCAST)
 }
 
 const WebSocketContext = createContext<IWebSocketContext | null>(null);
@@ -21,6 +22,7 @@ export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const ws = useRef<WebSocket | null>(null);
   const [gameStarted, setGameStarted] = useState(false);
   const [sessionId, setSessionId] = useState<string | null>(null);
+  const [gameMode, setGameMode] = useState<'Easy' | 'Medium' | 'Hard' | null>(null);
 
   useEffect(() => {
     const WSS_URL = import.meta.env.VITE_WSS_URL || 'ws://localhost:4000';
@@ -118,6 +120,9 @@ export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       if (data.type === 'START_GAME_BROADCAST') {
       //  console.log('[WS_CONTEXT] Game started!');
         setGameStarted(true);
+        if (data.payload?.mode) {
+          setGameMode(data.payload.mode);
+        }
         setLastMessage(data);
 
         EventBus.emit('start-game');
@@ -209,7 +214,8 @@ export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     connectedUsers,
     gameStarted,
     sessionId,
-    resetGameState
+    resetGameState,
+    gameMode
   };
 
   return (

@@ -22,7 +22,7 @@ interface AacInterfaceProps {
   const [selectedCategory, setSelectedCategory] = React.useState<string | null>(null);
   const [activeVerb, setActiveVerb] = React.useState<AacVerb | null>(null);
   const [isAudioPlaying, setIsAudioPlaying] = React.useState(false);
-  const { sendMessage } = useWebSocket();
+  const { sendMessage, gameMode  } = useWebSocket();
 
   useEffect(() => {
     if (sessionId && userId && role && sendMessage) {
@@ -88,6 +88,7 @@ interface AacInterfaceProps {
     }
     setActiveVerb(null);
     playAudioWithDelay(food.audioPath);
+    
   };
 
   /**
@@ -180,8 +181,8 @@ interface AacInterfaceProps {
           Back
         </button>
 
-        {/* Verb Buttons */}
-        {AAC_VERBS.map((verb) => (
+        {/* Verb Buttons (hidden in Easy mode) */}
+        {gameMode !== 'Easy' && AAC_VERBS.map((verb) => (
           <button
             key={verb.name}
             onClick={() => handleVerbClick(verb)}
