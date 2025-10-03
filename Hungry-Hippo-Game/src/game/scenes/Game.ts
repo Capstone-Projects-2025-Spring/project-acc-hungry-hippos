@@ -579,17 +579,29 @@ private getEdgeCursors(edge: Edge, cursors: Phaser.Types.Input.Keyboard.CursorKe
   }
 
   private handlePlayersUpdated(updatedUsers: { userId: string; role: string; color?: string }[]) {
-  const activeIds = updatedUsers.map(u => u.userId);
-  for (const userId of Object.keys(this.players)) {
-    if (!activeIds.includes(userId)) {
-      // Remove the Hippo sprite
-      this.players[userId].destroy();
-      delete this.players[userId];
-      delete this.playerScores[userId];
-      delete this.edgeAssignments[userId];
+    const activeIds = updatedUsers.map(u => u.userId);
+    for (const userId of Object.keys(this.players)) {
+      if (!activeIds.includes(userId)) {
+        const edge = this.edgeAssignments[userId];
+        if (edge && !this.availableEdges.includes(edge)) {
+          this.availableEdges.unshift(edge as Edge);
+        }
+        // Remove the Hippo sprite
+        this.players[userId].destroy();
+        delete this.players[userId];
+        delete this.playerScores[userId];
+        delete this.edgeAssignments[userId];
+      }
     }
+
+    updatedUsers
+      .filter(u => u.role === 'Hippo Player')
+      .forEach(u => {
+        if (!this.players[u.userId]){
+          this.addPlayer(u.userId, u.color);
+        }
+      });
   }
-}
 
   private applyEffectToPlayer(targetUserId: string, effect: AacVerb) {
     const targetHippo = this.players[targetUserId];

@@ -193,6 +193,3 @@ To successfully develop this project, the following technical competencies and b
 </table>
 
 [//]: # ( readme: collaborators -end )
-
-
-#Alphin Testing
